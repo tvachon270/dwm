@@ -3,8 +3,6 @@
 /* includes */
 #include <X11/XF86keysym.h>
 
-#include "gaplessgrid.c"
-
 
 /* need audio keys */
 #define XK_VOLM XF86XK_AudioMute
@@ -54,11 +52,15 @@ static const Layout layouts[] = {
 	{ "[]=",      tile },    /* first entry is default */
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
+	{ "[@]",      tile },
+	{ "[\\]",     tile },
+	{ "|M|",      tile },
+	{ ">M>",      tile },
 	/*{ "[@]",      spiral },
 	{ "[\\]",     dwindle },
 	{ "|M|",      centeredmaster },
-	{ ">M>",      centeredfloatingmaster },
-	{ "#",        gaplessgrid },*/
+	{ ">M>",      centeredfloatingmaster },*/
+	{ "#",        gaplessgrid },
 };
 
 /* key definitions */
