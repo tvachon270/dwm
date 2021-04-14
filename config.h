@@ -12,6 +12,8 @@
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
+static const int startwithgaps      = 1;        /* 1 means gaps are ON by default */
+static const unsigned int gappx     = 10;       /* default gap value */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
@@ -128,12 +130,12 @@ static Key keys[] = {
 	{ MODKEY | ShiftMask,           XK_comma,  tagmon,         {.i = -1 } },
 	{ MODKEY | ShiftMask,           XK_period, tagmon,         {.i = +1 } },
 	/*{ MODKEY,                       XK_n,      shiftview,      {.i = +1 } },
-	{ MODKEY,                       XK_b,      shiftview,      {.i = -1 } },
+	{ MODKEY,                       XK_b,      shiftview,      {.i = -1 } }, */
 	{ MODKEY,                       XK_minus,  setgaps,        {.i = -5 } },
 	{ MODKEY,                       XK_equal,  setgaps,        {.i = +5 } },
 	{ MODKEY | ShiftMask,           XK_minus,  setgaps,        {.i = GAP_RESET } },
 	{ MODKEY | ShiftMask,           XK_equal,  setgaps,        {.i = GAP_TOGGLE } },
-	{ MODKEY | ShiftMask,           XK_f,      togglefullscr,  {0} }, */
+	/*{ MODKEY | ShiftMask,           XK_f,      togglefullscr,  {0} }, */
 	TAGKEYS(                        XK_1,                      0)
 	TAGKEYS(                        XK_2,                      1)
 	TAGKEYS(                        XK_3,                      2)
