@@ -52,8 +52,8 @@
 #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * (X)->bw + gappx)
-#define HEIGHT(X)               ((X)->h + 2 * (X)->bw + gappx)
+#define WIDTH(X)                ((X)->w + 2 * (X)->bw + selmon->gappx)
+#define HEIGHT(X)               ((X)->h + 2 * (X)->bw + selmon->gappx)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -1168,7 +1168,6 @@ monocle(Monitor *m)
 	if (n > 0) /* override layout symbol */
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next)) {
-		// resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 		if (selmon->drawwithgaps) {
 			resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 		} else {
@@ -1343,49 +1342,17 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	unsigned int gapincr;
 	Client *nbc;
 
-	// c->oldx = c->x; c->x = wc.x = x;
-	// c->oldy = c->y; c->y = wc.y = y;
-	// c->oldw = c->w; c->w = wc.width = w;
-	// c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
-	/*
-	 * This is the noborderfloatingfix patch, slightly modified so that it
-	 * will work if, and only if, gaps are disabled.
-	 * These two first lines are the only ones changed.
-	 * If you are manually patching and have noborder installed already,
-	 * just change these lines; or conversely, just remove this section
-	 * if the noborder patch is not desired ;)
-	 */
-	/* if (!selmon->drawwithgaps
-	    && (((nexttiled(c->mon->clients) == c && !nexttiled(c->next))
-	          || &monocle == c->mon->lt[c->mon->sellt]->arrange))
-	    && !c->isfullscreen && !c->isfloating
-	    && NULL != c->mon->lt[c->mon->sellt]->arrange) {
-		c->w = wc.width += c->bw * 2;
-		c->h = wc.height += c->bw * 2;
-		wc.border_width = 0;
-	} */
-
 
 	/* Get number of clients for the client's monitor */
 	for (n = 0, nbc = nexttiled(c->mon->clients); nbc; nbc = nexttiled(nbc->next), n++);
 
-	/* Do nothing if layout is floating */
-	if (c->isfloating || c->mon->lt[c->mon->sellt]->arrange == NULL) {
+	/* Do nothing if layout is floating or gaps are disabled */
+	if (!selmon->drawwithgaps || c->isfloating || c->mon->lt[c->mon->sellt]->arrange == NULL) {
 		gapincr = gapoffset = 0;
 	} else {
-		/* Remove border and gap if layout is monocle or only one client */
-		/* M.G. I don't want this so it's commented out */
-		/*if (c->mon->lt[c->mon->sellt]->arrange == monocle || n == 1) {
-			gapoffset = 0;
-			gapincr = -2 * borderpx;
-			wc.border_width = 0;
-		} else {
-			gapoffset = gappx;
-			gapincr = 2 * gappx;
-		}*/
-		gapoffset = gappx;
-		gapincr = 2 * gappx;
+		gapoffset = selmon->gappx;
+		gapincr = 2 * selmon->gappx;
 	}
 
 	c->oldx = c->x; c->x = wc.x = x + gapoffset;
@@ -1611,19 +1578,29 @@ setfullscreen(Client *c, int fullscreen)
 void
 setgaps(const Arg *arg)
 {
+	static int prevgaps = gappx;
+
 	switch(arg->i)
 	{
 		case GAP_TOGGLE:
 			selmon->drawwithgaps = !selmon->drawwithgaps;
+			if (selmon->drawwithgaps) {
+				selmon->gappx = prevgaps;
+			} else {
+				prevgaps = (selmon->gappx > 5) ? selmon->gappx : 5;
+				selmon->gappx = 0;
+			}
 			break;
 		case GAP_RESET:
+			selmon->drawwithgaps = 1;
 			selmon->gappx = gappx;
 			break;
 		default:
-			if (selmon->gappx + arg->i < 0)
+			if (selmon->gappx + arg->i < 0) {
 				selmon->gappx = 0;
-			else
+			} else {
 				selmon->gappx += arg->i;
+			}
 	}
 	arrange(selmon);
 }
@@ -1811,7 +1788,7 @@ tile(Monitor *m)
 	if (n == 0)
 		return;
 
-	if (n > m->nmaster)
+/*	if (n > m->nmaster)
 		mw = m->nmaster ? m->ww * m->mfact : 0;
 	else
 		mw = m->ww;
@@ -1826,7 +1803,57 @@ tile(Monitor *m)
 			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
 			if (ty + HEIGHT(c) < m->wh)
 				ty += HEIGHT(c);
-		}
+		}*/
+	if (m->drawwithgaps) { /* draw with fullgaps logic */
+		if (n > m->nmaster)
+			mw = m->nmaster ? m->ww * m->mfact : 0;
+		else
+			mw = m->ww - m->gappx;
+		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+			if (i < m->nmaster) {
+				/* monitor is in the master stack */
+				h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
+				resize(c,
+				       m->wx + m->gappx,
+				       m->wy + my,
+				       mw - (2*c->bw) - m->gappx,
+				       h - (2*c->bw),
+				       0
+				);
+				if (my + HEIGHT(c) + m->gappx < m->wh)
+					my += HEIGHT(c) + m->gappx;
+			} else {
+				/* monitor is in the slave stack */
+				h = (m->wh - ty) / (n - i) - m->gappx;
+				resize(c,
+				       m->wx + mw + m->gappx,
+				       m->wy + ty,
+				       m->ww - mw - (2*c->bw) - 2*m->gappx,
+				       h - (2*c->bw),
+				       0
+				);
+				if (ty + HEIGHT(c) + m->gappx < m->wh)
+					ty += HEIGHT(c) + m->gappx;
+			}
+	} else { /* draw with singularborders logic */
+		if (n > m->nmaster)
+			mw = m->nmaster ? m->ww * m->mfact : 0;
+		else
+			mw = m->ww;
+		for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
+			if (i < m->nmaster) {
+				h = (m->wh - my) / (MIN(n, m->nmaster) - i);
+				if (n == 1)
+					resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
+				else
+					resize(c, m->wx - c->bw, m->wy + my, mw - c->bw, h - c->bw, False);
+				my += HEIGHT(c) - c->bw;
+			} else {
+				h = (m->wh - ty) / (n - i);
+				resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
+				ty += HEIGHT(c) - c->bw;
+			}
+	}
 }
 
 void
