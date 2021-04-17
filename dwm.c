@@ -211,6 +211,7 @@ static void setlayout(const Arg *arg);
 static void setmfact(const Arg *arg);
 static void setup(void);
 static void seturgent(Client *c, int urg);
+static void shiftview(const Arg *arg);
 static void showhide(Client *c);
 static void sigchld(int unused);
 static void spawn(const Arg *arg);
@@ -219,6 +220,7 @@ static void tagmon(const Arg *arg);
 static void tile(Monitor *);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
+static void togglefullscr(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unfocus(Client *c, int setfocus);
@@ -1329,8 +1331,9 @@ recttomon(int x, int y, int w, int h)
 void
 resize(Client *c, int x, int y, int w, int h, int interact)
 {
-	if (applysizehints(c, &x, &y, &w, &h, interact))
-		resizeclient(c, x, y, w, h);
+	// if (applysizehints(c, &x, &y, &w, &h, interact))
+	// always resize, sue me
+	resizeclient(c, x, y, w, h);
 }
 
 void
@@ -1718,6 +1721,24 @@ seturgent(Client *c, int urg)
 	XFree(wmh);
 }
 
+
+static void
+shiftview(const Arg *arg)
+{
+	Arg shifted;
+
+	/* left circular shift */
+	if (arg->i > 0) {
+		shifted.ui = (selmon->tagset[selmon->seltags] << arg->i)
+			| (selmon->tagset[selmon->seltags] >> (LENGTH(tags) - arg->i));
+	} else {
+		shifted.ui = selmon->tagset[selmon->seltags] >> (-arg->i)
+			| selmon->tagset[selmon->seltags] << (LENGTH(tags) + arg->i);
+	}
+
+	view(&shifted);
+}
+
 void
 showhide(Client *c)
 {
@@ -1788,72 +1809,23 @@ tile(Monitor *m)
 	if (n == 0)
 		return;
 
-/*	if (n > m->nmaster)
+	if (n > m->nmaster)
 		mw = m->nmaster ? m->ww * m->mfact : 0;
 	else
 		mw = m->ww;
 	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (i < m->nmaster) {
 			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
-			if (my + HEIGHT(c) < m->wh)
-				my += HEIGHT(c);
+			if (n == 1)
+				resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
+			else
+				resize(c, m->wx - c->bw, m->wy + my, mw - c->bw, h - c->bw, False);
+			my += HEIGHT(c) - c->bw;
 		} else {
 			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
-			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
-		}*/
-	if (m->drawwithgaps) { /* draw with fullgaps logic */
-		if (n > m->nmaster)
-			mw = m->nmaster ? m->ww * m->mfact : 0;
-		else
-			mw = m->ww - m->gappx;
-		for (i = 0, my = ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-			if (i < m->nmaster) {
-				/* monitor is in the master stack */
-				h = (m->wh - my) / (MIN(n, m->nmaster) - i) - m->gappx;
-				resize(c,
-				       m->wx + m->gappx,
-				       m->wy + my,
-				       mw - (2*c->bw) - m->gappx,
-				       h - (2*c->bw),
-				       0
-				);
-				if (my + HEIGHT(c) + m->gappx < m->wh)
-					my += HEIGHT(c) + m->gappx;
-			} else {
-				/* monitor is in the slave stack */
-				h = (m->wh - ty) / (n - i) - m->gappx;
-				resize(c,
-				       m->wx + mw + m->gappx,
-				       m->wy + ty,
-				       m->ww - mw - (2*c->bw) - 2*m->gappx,
-				       h - (2*c->bw),
-				       0
-				);
-				if (ty + HEIGHT(c) + m->gappx < m->wh)
-					ty += HEIGHT(c) + m->gappx;
-			}
-	} else { /* draw with singularborders logic */
-		if (n > m->nmaster)
-			mw = m->nmaster ? m->ww * m->mfact : 0;
-		else
-			mw = m->ww;
-		for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
-			if (i < m->nmaster) {
-				h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-				if (n == 1)
-					resize(c, m->wx - c->bw, m->wy, m->ww, m->wh, False);
-				else
-					resize(c, m->wx - c->bw, m->wy + my, mw - c->bw, h - c->bw, False);
-				my += HEIGHT(c) - c->bw;
-			} else {
-				h = (m->wh - ty) / (n - i);
-				resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
-				ty += HEIGHT(c) - c->bw;
-			}
-	}
+			resize(c, m->wx + mw - c->bw, m->wy + ty, m->ww - mw, h - c->bw, False);
+			ty += HEIGHT(c) - c->bw;
+		}
 }
 
 void
@@ -1877,6 +1849,13 @@ togglefloating(const Arg *arg)
 		resize(selmon->sel, selmon->sel->x, selmon->sel->y,
 			selmon->sel->w, selmon->sel->h, 0);
 	arrange(selmon);
+}
+
+static void
+togglefullscr(const Arg *arg)
+{
+	if (selmon->sel)
+		setfullscreen(selmon->sel, !selmon->sel->isfullscreen);
 }
 
 void
