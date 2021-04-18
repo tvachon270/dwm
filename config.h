@@ -17,7 +17,7 @@ static const unsigned int gappx     = 10;       /* default gap value */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
-static const char *fonts[]          = { "monospace:size=10" };
+static const char *fonts[]          = { "mononoki:pixelsize=15:antialias=true:autohint=false" };
 static const char dmenufont[]       = "Calling Code";
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
@@ -54,14 +54,10 @@ static const Layout layouts[] = {
 	{ "[]=",      tile },    /* first entry is default */
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
-	{ "[@]",      tile },
-	{ "[\\]",     tile },
-	{ "|M|",      tile },
-	{ ">M>",      tile },
-	/*{ "[@]",      spiral },
+	{ "[@]",      spiral },
 	{ "[\\]",     dwindle },
 	{ "|M|",      centeredmaster },
-	{ ">M>",      centeredfloatingmaster },*/
+	{ ">M>",      centeredfloatingmaster },
 	{ "#",        gaplessgrid },
 };
 
@@ -82,9 +78,9 @@ static const char* dmenucmd[] = {"dmenu_run", "-m", dmenumon,
 	"-fn", dmenufont, "-l", "10", "-b", "-sb", "#303030", "-sf", "green",
 	"-nb", "black", "-nf", "white", NULL};
 static const char* termcmd[]  = { "st", NULL };
-static const char* cmuscmd[] = {"st", "-e", "cmus", NULL};
-static const char* nnncmd[] = {"st", "-e", "nnn", NULL};
-static const char* htopcmd[] = {"st", "-e", "htop", "-t", NULL};
+static const char* cmuscmd[]  = {"st", "-e", "cmus", NULL};
+static const char* nnncmd[]   = {"st", "-e", "nnn", NULL};
+static const char* htopcmd[]  = {"st", "-e", "htop", "-t", NULL};
 #define scrotcmd "scrot --delay 1 -z '%Y-%m-%d-%H%M%S_$wx$h_scrot.png' -e 'mv $f ~/Pictures/scrot/'"
 #define volmutecmd "pactl list sinks | grep Plantronics -A 5 | grep -q Mute:.no && pactl set-sink-mute alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo 1 || pactl set-sink-mute alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo 0"
 #define voldowncmd "pactl set-sink-volume alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo -5%"
