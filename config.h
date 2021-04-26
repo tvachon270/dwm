@@ -64,10 +64,10 @@ static const Layout layouts[] = {
 /* key definitions */
 #define MODKEY Mod4Mask
 #define TAGKEYS(KEY,TAG) \
-	{ MODKEY,                         KEY,      view,           {.ui = 1 << TAG} }, \
-	{ MODKEY | ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
-	{ MODKEY | ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
-	{ MODKEY | ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
+	{ MODKEY,                           KEY,      view,           {.ui = 1 << TAG} }, \
+	{ MODKEY | ControlMask,             KEY,      toggleview,     {.ui = 1 << TAG} }, \
+	{ MODKEY | ShiftMask,               KEY,      tag,            {.ui = 1 << TAG} }, \
+	{ MODKEY | ControlMask | ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
 
 /* helper for spawning shell commands in the pre dwm-5.0 fashion */
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
@@ -82,9 +82,9 @@ static const char* cmuscmd[]  = {"st", "-e", "cmus", NULL};
 static const char* nnncmd[]   = {"st", "-e", "nnn", NULL};
 static const char* htopcmd[]  = {"st", "-e", "htop", "-t", NULL};
 #define scrotcmd "scrot --delay 1 -z '%Y-%m-%d-%H%M%S_$wx$h_scrot.png' -e 'mv $f ~/Pictures/scrot/'"
-#define volmutecmd "pactl list sinks | grep Plantronics -A 5 | grep -q Mute:.no && pactl set-sink-mute alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo 1 || pactl set-sink-mute alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo 0"
-#define voldowncmd "pactl set-sink-volume alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo -5%"
-#define volupcmd "pactl set-sink-volume alsa_output.usb-Plantronics_Plantronics_Blackwire_3220_Series_E03CEAFA6F2A4864AA84221ED06478ED-00.analog-stereo +5%"
+#define volmutecmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh toggle_mute"
+#define voldowncmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh down"
+#define volupcmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh up"
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -93,9 +93,12 @@ static Key keys[] = {
 	{ MODKEY | ShiftMask,           XK_m,      spawn,          {.v = cmuscmd } },
 	{ MODKEY | ShiftMask,           XK_n,      spawn,          {.v = nnncmd } },
 	{ MODKEY | ShiftMask,           XK_s,      spawn,          SHCMD(scrotcmd) },
-	{ 0,                            XK_VOLM,   spawn,          SHCMD(volmutecmd) },
-	{ 0,                            XK_VOLD,   spawn,          SHCMD(voldowncmd) },
-	{ 0,                            XK_VOLU,   spawn,          SHCMD(volupcmd) },
+	/* { 0,                            XK_VOLM,   spawn,          SHCMD(volmutecmd) },*/
+	/* { 0,                            XK_VOLD,   spawn,          SHCMD(voldowncmd) },*/
+	/* { 0,                            XK_VOLU,   spawn,          SHCMD(volupcmd) },*/
+	{ MODKEY | ControlMask,         XK_Pause,  spawn,          SHCMD(volmutecmd) },
+	{ MODKEY | ControlMask,         XK_Next,   spawn,          SHCMD(voldowncmd) },
+	{ MODKEY | ControlMask,         XK_Prior,  spawn,          SHCMD(volupcmd) },
 	{ MODKEY | ShiftMask,           XK_t,      spawn,          {.v = htopcmd } },
 	{ MODKEY | ShiftMask,           XK_p,      spawn,          SHCMD("~/scripts/project_screen.sh") },
 	{ MODKEY | ShiftMask,           XK_l,      spawn,          SHCMD("slock") },
@@ -141,7 +144,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_7,                      6)
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
-	{ MODKEY|ShiftMask,             XK_e,      quit,           {0} },
+	{ MODKEY | ShiftMask,           XK_e,      quit,           {0} },
 };
 
 /* button definitions */
