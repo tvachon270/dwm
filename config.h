@@ -3,7 +3,6 @@
 /* includes */
 #include <X11/XF86keysym.h>
 
-
 /* need audio keys */
 #define XK_VOLM XF86XK_AudioMute
 #define XK_VOLU XF86XK_AudioRaiseVolume
@@ -13,10 +12,14 @@
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const int startwithgaps      = 1;        /* 1 means gaps are ON by default */
-static const unsigned int gappx     = 10;       /* default gap value */
+static const unsigned int gappx     = 20;       /* default gap value */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
+static const int usealtbar          = 0;        /* 1 means use non-dwm status bar */
+static const char *altbarclass      = "Polybar"; /* Alternate bar class name */
+static const char *alttrayname      = "tray";    /* Polybar tray instance name */
+static const char *altbarcmd        = "$HOME/bar.sh"; /* Alternate bar launch command */
 static const char *fonts[]          = { "mononoki:pixelsize=15:antialias=true:autohint=false" };
 static const char dmenufont[]       = "Calling Code";
 static const char col_gray1[]       = "#222222";
@@ -77,32 +80,37 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char* dmenucmd[] = {"dmenu_run", "-m", dmenumon,
 	"-fn", dmenufont, "-l", "10", "-b", "-sb", "#303030", "-sf", "green",
 	"-nb", "black", "-nf", "white", NULL};
-static const char* termcmd[]  = { "st", NULL };
+static const char* termcmd[]  = { "alacritty", NULL };
 static const char* cmuscmd[]  = {"st", "-e", "cmus", NULL};
 static const char* nnncmd[]   = {"st", "-e", "nnn", NULL};
 static const char* htopcmd[]  = {"st", "-e", "htop", "-t", NULL};
 #define scrotcmd "scrot --delay 1 -z '%Y-%m-%d-%H%M%S_$wx$h_scrot.png' -e 'mv $f ~/Pictures/scrot/'"
-#define volmutecmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh toggle_mute"
-#define voldowncmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh down"
-#define volupcmd "$HOME/programs/dotfiles/scripts/volume_ctl.sh up"
+#define volmutecmd "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+#define voldowncmd "pactl set-sink-volume @DEFAULT_SINK@ -2%"
+#define volupcmd "pactl set-sink-volume @DEFAULT_SINK@ +2%"
+#define pausecmd ""
+#define nextcmd ""
+#define priorcmd ""
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY,                       XK_d,      spawn,          {.v = dmenucmd } },
+	{ MODKEY,                       XK_space,  spawn,          {.v = dmenucmd } },
 	{ MODKEY,                       XK_Return, spawn,          {.v = termcmd } },
 	{ MODKEY | ShiftMask,           XK_m,      spawn,          {.v = cmuscmd } },
 	{ MODKEY | ShiftMask,           XK_n,      spawn,          {.v = nnncmd } },
 	{ MODKEY | ShiftMask,           XK_s,      spawn,          SHCMD(scrotcmd) },
-	/* { 0,                            XK_VOLM,   spawn,          SHCMD(volmutecmd) },*/
-	/* { 0,                            XK_VOLD,   spawn,          SHCMD(voldowncmd) },*/
-	/* { 0,                            XK_VOLU,   spawn,          SHCMD(volupcmd) },*/
-	{ MODKEY | ControlMask,         XK_Pause,  spawn,          SHCMD(volmutecmd) },
-	{ MODKEY | ControlMask,         XK_Next,   spawn,          SHCMD(voldowncmd) },
-	{ MODKEY | ControlMask,         XK_Prior,  spawn,          SHCMD(volupcmd) },
+	{ 0,                            XK_VOLM,   spawn,          SHCMD(volmutecmd) },
+	{ 0,                            XK_VOLD,   spawn,          SHCMD(voldowncmd) },
+	{ 0,                            XK_VOLU,   spawn,          SHCMD(volupcmd) },
+	/*{ 0,			        XK_Pause,  spawn,          SHCMD(pausecmd) },*/
+	/*{ 0,			        XK_Next,   spawn,          SHCMD(nextcmd) },*/
+	/*{ 0,			        XK_Prior,  spawn,          SHCMD(priorcmd) },*/
 	{ MODKEY | ShiftMask,           XK_t,      spawn,          {.v = htopcmd } },
 	{ MODKEY | ShiftMask,           XK_p,      spawn,          SHCMD("~/scripts/project_screen.sh") },
 	{ MODKEY | ShiftMask,           XK_l,      spawn,          SHCMD("slock") },
 	{ MODKEY | ShiftMask,           XK_b,      togglebar,      {0} },
+	{ MODKEY | ShiftMask,           XK_j,      rotatestack,    {.i = +1 } },
+	{ MODKEY | ShiftMask,           XK_k,      rotatestack,    {.i = -1 } },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
 	{ MODKEY,                       XK_i,      incnmaster,     {.i = +1 } },
@@ -120,8 +128,8 @@ static Key keys[] = {
 	{ MODKEY,                       XK_u,      setlayout,      {.v = &layouts[5]} },
 	{ MODKEY,                       XK_o,      setlayout,      {.v = &layouts[6]} },
 	{ MODKEY,                       XK_g,      setlayout,      {.v = &layouts[7]} },
-	{ MODKEY,                       XK_space,  setlayout,      {0} },
-	{ MODKEY | ShiftMask,           XK_space,  togglefloating, {0} },
+	{ MODKEY,                       XK_d,  	   setlayout,      {0} },
+	{ MODKEY | ShiftMask,           XK_d,      togglefloating, {0} },
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
 	{ MODKEY | ShiftMask,           XK_0,      tag,            {.ui = ~0 } },
 	{ MODKEY,                       XK_comma,  focusmon,       {.i = -1 } },
