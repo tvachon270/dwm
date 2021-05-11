@@ -12,7 +12,7 @@
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const int startwithgaps      = 1;        /* 1 means gaps are ON by default */
-static const unsigned int gappx     = 20;       /* default gap value */
+static const unsigned int gappx     = 30;       /* default gap value */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
