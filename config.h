@@ -1,5 +1,12 @@
 /* See LICENSE file for copyright and license details. */
 
+#include <X11/XF86keysym.h>
+
+/* Audio keys */
+#define XK_VOLM XF86XK_AudioMute
+#define XK_VOLU XF86XK_AudioRaiseVolume
+#define XK_VOLD XF86XK_AudioLowerVolume
+
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
 static const unsigned int snap      = 32;       /* snap pixel */
@@ -77,10 +84,17 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *termcmd[]  = { "alacritty", NULL };
 
+#define volmutecmd "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+#define voldowncmd "pactl set-sink-volume @DEFAULT_SINK@ -2%"
+#define volupcmd "pactl set-sink-volume @DEFAULT_SINK@ +2%"
+
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_space,  spawn,          {.v = dmenucmd } },
 	{ MODKEY,	                XK_Return, spawn,          {.v = termcmd } },
+	{ 0,                            XK_VOLM,   spawn,          SHCMD(volmutecmd) },
+	{ 0,                            XK_VOLD,   spawn,          SHCMD(voldowncmd) },
+	{ 0,                            XK_VOLU,   spawn,          SHCMD(volupcmd) },
 	{ MODKEY|ShiftMask,             XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
